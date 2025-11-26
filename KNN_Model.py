@@ -53,6 +53,18 @@ if len(selected_features) == 0:
 
 df = dataset[selected_features + ["LUNG_CANCER"]].copy()
 
+# ======================
+# Convert non-numeric columns to numeric
+# ======================
+for col in selected_features:
+    if df[col].dtype == 'object' or df[col].dtype.name == 'category':
+        df[col] = LabelEncoder().fit_transform(df[col])
+    elif df[col].dtype == 'bool':
+        df[col] = df[col].astype(int)
+
+# Fill missing values
+df.fillna(0, inplace=True)
+
 # Split data
 X = df[selected_features]
 y = df["LUNG_CANCER"]
