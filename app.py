@@ -21,21 +21,20 @@ from imblearn.over_sampling import SMOTE
 # ======================
 st.set_page_config(page_title="Lung Cancer Prediction", layout="wide")
 st.markdown("""
-    <h2 style="text-align:center; color:#FF5733;">🚑 Lung Cancer Prediction (Auto Best Model)</h2>
+    <h2 style="text-align:center; color:#FF5733;">🚑 Lung Cancer Prediction (Auto Best Model + SMOTE)</h2>
 """, unsafe_allow_html=True)
 
 # ======================
 # Load Dataset
 # ======================
 dataset = pd.read_csv("dataset_2.csv")
-
 dataset = dataset.drop_duplicates()
 
 st.sidebar.header("📌 Info Dataset")
 st.sidebar.write(f"Jumlah Data : {dataset.shape[0]}")
 st.sidebar.write(f"Jumlah Kolom : {dataset.shape[1]}")
 
-# Encode target
+# Encode target kolom LUNG_CANCER
 label_encoder = LabelEncoder()
 dataset["LUNG_CANCER"] = label_encoder.fit_transform(dataset["LUNG_CANCER"])
 
@@ -57,32 +56,36 @@ if len(selected_features) == 0:
 
 df = dataset[selected_features + ["LUNG_CANCER"]].copy()
 
-# Convert categorical to numeric
+# Encode categorical features
 for col in selected_features:
     if df[col].dtype == 'object':
         df[col] = LabelEncoder().fit_transform(df[col])
-    elif df[col].dtype == 'bool':
+    elif df[col].dtype == bool:
         df[col] = df[col].astype(int)
 
 df.fillna(0, inplace=True)
 
-# Dataset split
+# Split feature/target
 X = df[selected_features]
 y = df["LUNG_CANCER"]
 
+# Scaling
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
+# Train-test split
 X_train, X_test, y_train, y_test = train_test_split(
     X_scaled, y, test_size=0.2, random_state=42
 )
 
-# SMOTE
+# ======================
+# 🔥 SMOTE BALANCING
+# ======================
 sm = SMOTE(random_state=42)
 X_train_res, y_train_res = sm.fit_resample(X_train, y_train)
 
 # ======================
-# Train Multiple Models
+# 🔥 Train Multiple Models
 # ======================
 models = {
     "KNN": KNeighborsClassifier(n_neighbors=5),
@@ -100,6 +103,7 @@ for name, mdl in models.items():
     acc = accuracy_score(y_test, pred)
     results[name] = acc
 
+# Pilih model terbaik
 best_model_name = max(results, key=results.get)
 best_model = models[best_model_name]
 
@@ -111,7 +115,7 @@ st.sidebar.success(f"🎉 Model Terbaik: **{best_model_name}** (Akurasi: {result
 tab1, tab2, tab3 = st.tabs(["📊 Dataset", "🤖 Prediksi", "📈 Evaluasi"])
 
 # ======================
-# TAB 1 – Dataset
+# TAB 1 - Dataset
 # ======================
 with tab1:
     st.subheader("Sample Data")
@@ -123,7 +127,7 @@ with tab1:
     st.pyplot(fig)
 
 # ======================
-# TAB 2 – PREDIKSI
+# TAB 2 - Prediction
 # ======================
 with tab2:
     st.subheader("Masukkan Data Pasien")
@@ -132,8 +136,8 @@ with tab2:
 
     for feature in selected_features:
 
-        # ==== KHUSUS UNTUK USIA (NUMBER INPUT) ====
-        if feature.lower() == "usia":
+        # KHUSUS USIA → INPUT ANGKA
+        if feature.lower() in ["age", "usia"]:
             min_val = int(dataset[feature].min())
             max_val = int(dataset[feature].max())
             default_val = int(dataset[feature].mean())
@@ -146,19 +150,16 @@ with tab2:
             )
 
         else:
-            # ==== FITUR LAIN: YA / TIDAK ====
+            # FITUR BOOLEAN → YA TIDAK
             pilihan = st.radio(
                 f"{feature}",
-                ["Tidak", "Ya"],     # tampilan ke user
+                ["Tidak", "Ya"],
                 horizontal=True
             )
-
-            # Convert ke angka
             value = 1 if pilihan == "Ya" else 0
 
         input_data.append(value)
 
-    # Tombol Prediksi
     if st.button("Prediksi"):
         input_array = np.array(input_data).reshape(1, -1)
         input_scaled = scaler.transform(input_array)
@@ -173,7 +174,7 @@ with tab2:
         )
 
 # ======================
-# TAB 3 – Evaluasi Model
+# TAB 3 - Evaluation
 # ======================
 with tab3:
     st.subheader("Evaluasi Model Terbaik")
