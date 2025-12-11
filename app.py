@@ -4,29 +4,25 @@ import numpy as np
 import joblib
 
 st.title("Prediksi Penyakit Kanker Paru-paru")
-st.write("Isi semua gejala di bawah ini untuk memprediksi apakah seseorang terindikasi kanker paru-paru atau tidak.")
+st.write("Isi semua gejala berikut untuk memprediksi apakah seseorang terindikasi kanker paru-paru atau tidak.")
 
-# ================================
+# =========================================
 # LOAD MODEL & SCALER
-# ================================
+# =========================================
 model = joblib.load("model_rf.pkl")
 scaler = joblib.load("scaler.pkl")
 
-# ================================
-# FUNGSI INPUT YA/TIDAK
-# ================================
-# Sesuai dataset:
-# 1 = YA (True/Severe)
-# 2 = TIDAK (False)
-
+# =========================================
+# INPUT FUNGSI YA/TIDAK (0 dan 1)
+# =========================================
 def yes_no_input(label):
     pilihan = st.selectbox(label, ["Tidak", "Ya"])
-    return 2 if pilihan == "Tidak" else 1
+    return 1 if pilihan == "Ya" else 0   # FIX: gunakan 0/1
 
 
-# ================================
+# =========================================
 # FORM INPUT USER
-# ================================
+# =========================================
 gender = st.selectbox("Gender", ["Laki-laki", "Perempuan"])
 gender_val = 1 if gender == "Laki-laki" else 0
 
@@ -46,24 +42,21 @@ short_breath = yes_no_input("Sesak napas?")
 swallow = yes_no_input("Sulit menelan?")
 chest_pain = yes_no_input("Nyeri dada?")
 
-# ================================
-# PROSES PREDIKSI
-# ================================
+# =========================================
+# PREDIKSI
+# =========================================
 if st.button("Prediksi"):
-    # urutan sesuai kolom dataset
     input_data = np.array([[gender_val, age, smoking, yellow, anxiety, peer,
                             chronic, fatigue, allergy, wheezing, alcohol,
                             coughing, short_breath, swallow, chest_pain]])
 
-    # scaling
+    # scaling input
     input_scaled = scaler.transform(input_data)
 
     # prediksi
     pred = model.predict(input_scaled)[0]
 
-    # ===========================
-    # OUTPUT
-    # ===========================
+    # Output
     if pred == 1:
         st.error("⚠ Terindikasi Kanker Paru-paru")
     else:
