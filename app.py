@@ -27,7 +27,7 @@ st.markdown("""
 # ======================
 # Load Dataset
 # ======================
-dataset = pd.read_csv("dataset_2.csv")
+dataset = pd.read_csv("datset_baru.csv")
 
 st.sidebar.header("📌 Data Info")
 st.sidebar.write(f"Jumlah Data : {dataset.shape[0]}")
