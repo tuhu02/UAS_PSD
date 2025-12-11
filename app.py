@@ -138,37 +138,68 @@ with tab2:
     st.subheader("Masukkan Data Pasien")
 
     input_data = []
+
     for feature in selected_features:
 
         # ======================
-        # AGE = number input
+        # AGE
         # ======================
         if feature.upper() == "AGE":
             min_age = int(df["AGE"].min()) if "AGE" in df.columns else 18
             max_age = int(df["AGE"].max()) if "AGE" in df.columns else 100
 
-            value = st.number_input(
+            age = st.number_input(
                 f"{feature} (tahun)",
                 min_value=min_age,
                 max_value=max_age,
-                value=min_age,
-                step=1
+                value=None,
+                step=1,
+                placeholder="Masukkan umur"
             )
-            input_data.append(value)
+
+            if age is None:
+                st.warning("Silakan isi umur pasien")
+                st.stop()
+
+            input_data.append(age)
 
         # ======================
-        # Other = Ya/Tidak
+        # GENDER (Laki-laki / Perempuan)
+        # ======================
+        elif feature.upper() == "GENDER":
+            gender = st.radio(
+                "GENDER",
+                ["Pilih...", "Laki-laki", "Perempuan"],
+                horizontal=True
+            )
+
+            if gender == "Pilih...":
+                st.warning("Silakan pilih GENDER")
+                st.stop()
+
+            gender_val = 1 if gender == "Laki-laki" else 0
+            input_data.append(gender_val)
+
+        # ======================
+        # Other Features: Ya / Tidak
         # ======================
         else:
             value = st.radio(
                 f"{feature}",
-                ["Tidak", "Ya"],
+                ["Pilih...", "Tidak", "Ya"],
                 horizontal=True
             )
-            # convert into numeric
+
+            if value == "Pilih...":
+                st.warning(f"Silakan pilih nilai untuk {feature}")
+                st.stop()
+
             numeric_value = 1 if value == "Ya" else 0
             input_data.append(numeric_value)
 
+    # ======================
+    # Predict
+    # ======================
     if st.button("Prediksi"):
         input_array = np.array(input_data).reshape(1, -1)
         input_scaled = scaler.transform(input_array)
