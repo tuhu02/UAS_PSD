@@ -3,5 +3,5 @@ pandas
 numpy
 matplotlib
 seaborn
-scikit-learn==1.4.2
-imblearn==0.12.0
+scikit-learn
+imbalanced-learn
