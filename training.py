@@ -1,70 +1,32 @@
-import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import RandomOverSampler
 
-st.title("Prediksi Penyakit Kanker Paru-paru")
-st.write("Isi semua gejala di bawah ini untuk memprediksi apakah seseorang terindikasi kanker paru-paru atau tidak.")
+df = pd.read_csv("dataset.csv")
 
-# ================================
-# LOAD MODEL & SCALER
-# ================================
-model = joblib.load("model_rf.pkl")
-scaler = joblib.load("scaler.pkl")
+df['LUNG_CANCER'] = df['LUNG_CANCER'].replace({"YES": 1, "NO": 0})
+df['GENDER'] = df['GENDER'].replace({"M": 1, "F": 0})
 
-# ================================
-# FUNGSI INPUT YA/TIDAK
-# ================================
-# Sesuai dataset:
-# 1 = YA (True/Severe)
-# 2 = TIDAK (False)
+X = df.drop('LUNG_CANCER', axis=1)
+y = df['LUNG_CANCER']
 
-def yes_no_input(label):
-    pilihan = st.selectbox(label, ["Tidak", "Ya"])
-    return 2 if pilihan == "Tidak" else 1
+# Buat dan fit scaler SEBELUM resampling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
 
+ros = RandomOverSampler(random_state=42)
+X_res, y_res = ros.fit_resample(X_scaled, y)
 
-# ================================
-# FORM INPUT USER
-# ================================
-gender = st.selectbox("Gender", ["Laki-laki", "Perempuan"])
-gender_val = 1 if gender == "Laki-laki" else 0
+model = RandomForestClassifier(n_estimators=300, random_state=42)
+model.fit(X_res, y_res)
 
-age = st.number_input("Usia", min_value=1, max_value=120, value=25)
+# simpan model, scaler, dan kolom
+joblib.dump(model, "model_rf.pkl")
+joblib.dump(scaler, "scaler.pkl")
+joblib.dump(list(X.columns), "columns.pkl")
 
-smoking = yes_no_input("Apakah merokok?")
-yellow = yes_no_input("Jari menguning?")
-anxiety = yes_no_input("Cemas berlebihan?")
-peer = yes_no_input("Tekanan dari teman?")
-chronic = yes_no_input("Penyakit kronis?")
-fatigue = yes_no_input("Mudah lelah?")
-allergy = yes_no_input("Alergi?")
-wheezing = yes_no_input("Napas berbunyi (mengi)?")
-alcohol = yes_no_input("Minum alkohol?")
-coughing = yes_no_input("Sering batuk?")
-short_breath = yes_no_input("Sesak napas?")
-swallow = yes_no_input("Sulit menelan?")
-chest_pain = yes_no_input("Nyeri dada?")
-
-# ================================
-# PROSES PREDIKSI
-# ================================
-if st.button("Prediksi"):
-    # urutan sesuai kolom dataset
-    input_data = np.array([[gender_val, age, smoking, yellow, anxiety, peer,
-                            chronic, fatigue, allergy, wheezing, alcohol,
-                            coughing, short_breath, swallow, chest_pain]])
-
-    # scaling
-    input_scaled = scaler.transform(input_data)
-
-    # prediksi
-    pred = model.predict(input_scaled)[0]
-
-    # ===========================
-    # OUTPUT
-    # ===========================
-    if pred == 1:
-        st.error("⚠ Terindikasi Kanker Paru-paru")
-    else:
-        st.success("✔ Tidak Terindikasi Kanker Paru-paru")
+print("Training selesai!")
