@@ -4,23 +4,13 @@ import pickle
 import numpy as np
 import os
 
-# Konfigurasi Halaman (Harus di paling atas)
-st.set_page_config(page_title="Prediksi Kanker Paru", layout="centered")
+# Konfigurasi Halaman
+st.set_page_config(page_title="Lung Cancer Detection", page_icon="🫁")
 
-# --- DEBUGGING AREA ---
-# Ini untuk mengecek apakah file pkl Anda benar-benar ada di folder tersebut
-st.sidebar.write("### Debug Info:")
-st.sidebar.write(f"Lokasi Folder: `{os.getcwd()}`")
-st.sidebar.write(f"File Model Ada: `{os.path.exists('model_lung_cancer.pkl')}`")
-st.sidebar.write(f"File Fitur Ada: `{os.path.exists('features.pkl')}`")
-
-# Fungsi Load Model dengan Try-Except
+# Fungsi Load Model
 @st.cache_resource
-def load_model():
+def load_resource():
     try:
-        if not os.path.exists('model_lung_cancer.pkl') or not os.path.exists('features.pkl'):
-            return None, None, "File .pkl tidak ditemukan di folder!"
-        
         with open('model_lung_cancer.pkl', 'rb') as f:
             model = pickle.load(f)
         with open('features.pkl', 'rb') as f:
@@ -29,52 +19,49 @@ def load_model():
     except Exception as e:
         return None, None, str(e)
 
-# Eksekusi Load
-model, features, err = load_model()
+model, features, err = load_resource()
+
+# Tampilan Utama
+st.title("🫁 Aplikasi Prediksi Kanker Paru-Paru")
+st.markdown("Aplikasi ini menggunakan model **Decision Tree** dengan akurasi **92%**.")
 
 if err:
-    st.error(f"❌ Error saat memuat model: {err}")
-    st.stop() # Berhenti di sini jika ada error
-
-# --- TAMPILAN UTAMA ---
-st.title("🫁 Aplikasi Prediksi Kanker Paru-Paru")
-st.info("Model: Decision Tree | Akurasi: 92%")
-
-if features:
-    st.write("### Masukkan Data Pasien:")
-    input_data = {}
+    st.error(f"Gagal memuat file model: {err}")
+    st.info("Pastikan Anda sudah menjalankan 'train.py' terlebih dahulu.")
+else:
+    st.write("### Masukkan Data Klinis Pasien")
+    st.write("Silakan isi formulir di bawah ini untuk mendapatkan hasil prediksi.")
     
-    # Membagi input menjadi 2 kolom agar tidak terlalu panjang ke bawah
+    input_data = {}
     col1, col2 = st.columns(2)
     
+    # Membuat input field secara otomatis berdasarkan fitur terpilih
     for i, feat in enumerate(features):
         with col1 if i % 2 == 0 else col2:
+            clean_name = feat.replace('_', ' ')
             if feat == 'AGE':
-                input_data[feat] = st.number_input(f"Umur ({feat})", 1, 100, 50)
+                input_data[feat] = st.number_input(f"Masukkan {clean_name}", 1, 100, 50)
             else:
-                # Menampilkan pilihan yang lebih manusiawi
-                label = feat.replace('_', ' ')
-                val = st.selectbox(f"{label}", options=[1, 2], 
-                                  format_func=lambda x: "Ya (2)" if x == 2 else "Tidak (1)")
-                input_data[feat] = val
+                # Untuk fitur biner (1=Tidak, 2=Ya) sesuai standar dataset ini
+                input_data[feat] = st.selectbox(
+                    f"{clean_name}", 
+                    options=[1, 2], 
+                    format_func=lambda x: "Ya (2)" if x == 2 else "Tidak (1)"
+                )
 
-    if st.button("Proses Prediksi", use_container_width=True):
-        # Convert input ke DataFrame
+    st.markdown("---")
+    if st.button("Analisis Hasil Prediksi", use_container_width=True):
+        # Proses Prediksi
         df_input = pd.DataFrame([input_data])
-        
-        # Prediksi
-        res = model.predict(df_input)[0]
-        prob = model.predict_proba(df_input)
+        prediction = model.predict(df_input)[0]
+        probability = model.predict_proba(df_input)
 
-        st.markdown("---")
-        if res == 1:
-            st.error(f"### ⚠️ Hasil: Terindikasi Kanker Paru-Paru")
+        if prediction == 1:
+            st.error("### ⚠️ Hasil: Terindikasi Kanker Paru-Paru")
         else:
-            st.success(f"### ✅ Hasil: Tidak Terindikasi Kanker Paru-Paru")
+            st.success("### ✅ Hasil: Tidak Terindikasi Kanker Paru-Paru")
         
-        st.write(f"**Keyakinan Model:** {np.max(prob)*100:.2f}%")
-else:
-    st.warning("Daftar fitur tidak ditemukan. Pastikan file 'features.pkl' berisi list nama kolom.")
+        st.write(f"**Tingkat Keyakinan Model:** {np.max(probability)*100:.2f}%")
 
-st.sidebar.markdown("---")
-st.sidebar.help("Jika layar putih, cek terminal tempat Anda menjalankan perintah 'streamlit run'.")``
+st.sidebar.markdown("### Tentang Aplikasi")
+st.sidebar.write("Dibuat untuk tugas PSD menggunakan Seleksi Fitur Chi2/F-Classif (10 Fitur Terbaik).")
