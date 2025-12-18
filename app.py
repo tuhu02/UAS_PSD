@@ -60,7 +60,7 @@ else:
         else:
             st.success("### ✅ Hasil: Tidak Terindikasi Kanker Paru-Paru")
         
-        st.write(f"**Tingkat Keyakinan Model:** {np.max(probability)*100:.2f}%")
+        # st.write(f"**Tingkat Keyakinan Model:** {np.max(probability)*100:.2f}%")
 
 st.sidebar.markdown("### Tentang Aplikasi")
 st.sidebar.write("Dibuat untuk tugas PSD menggunakan Seleksi Fitur Chi2 (10 Fitur Terbaik).")
