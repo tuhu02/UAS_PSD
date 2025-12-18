@@ -23,7 +23,6 @@ model, features, err = load_resource()
 
 # Tampilan Utama
 st.title("🫁 Aplikasi Prediksi Kanker Paru-Paru")
-st.markdown("Aplikasi ini menggunakan model **Decision Tree** dengan akurasi **92%**.")
 
 if err:
     st.error(f"Gagal memuat file model: {err}")
@@ -64,4 +63,4 @@ else:
         st.write(f"**Tingkat Keyakinan Model:** {np.max(probability)*100:.2f}%")
 
 st.sidebar.markdown("### Tentang Aplikasi")
-st.sidebar.write("Dibuat untuk tugas PSD menggunakan Seleksi Fitur Chi2/F-Classif (10 Fitur Terbaik).")
+st.sidebar.write("Dibuat untuk tugas PSD menggunakan Seleksi Fitur Chi2 (10 Fitur Terbaik).")

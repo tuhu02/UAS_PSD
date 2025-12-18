@@ -15,7 +15,7 @@ if df['LUNG_CANCER'].dtype == 'object':
     df['LUNG_CANCER'] = df['LUNG_CANCER'].map({'YES': 1, 'NO': 0})
 
 # Pisahkan fitur (X) dan target (y)
-X = df.drop(columns=['LUNG_CANCER'])
+X = df.drop(columns=['LUNG_CANCER'])    
 y = df['LUNG_CANCER']
 
 # Konversi kolom kategori lain (seperti GENDER) ke dummy/numerik jika ada
